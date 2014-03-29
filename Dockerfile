@@ -1,19 +1,43 @@
 # use the ubuntu base image provided by dotCloud
-FROM ubuntu:12.04
-#
+docker-version 0.9.1
+from ubuntu:12.04
+maintainer dockberwal  <dockberwal@gmail.com>
 
-# make sure the package repository is up to date
-run echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
-run chmod 777 /etc/resolv.conf
-run echo "nameserver 8.8.8.8" > /etc/resolv.conf
+# Build dependencies
+run echo 'deb http://archive.ubuntu.com/ubuntu precise main universe' > /etc/apt/sources.list
 run apt-get update
+run apt-get install -y -q curl
+run apt-get install -y -q git
+run apt-get install -y -q mercurial
+run apt-get install -y -q build-essential libsqlite3-dev
 
-# Install vnc, xvfb in order to create a 'fake' display and firefox
-run apt-get install -y x11vnc xvfb firefox
-run mkdir /.vnc
-# Setup a password
-run x11vnc -storepasswd 1234 ~/.vnc/passwd
-# Autostart firefox (might not be the best way to do it, but it does the trick)
-run bash -c 'echo "firefox" >> /.bashrc'
+# Install Go
+run curl -s https://go.googlecode.com/files/go1.2rc2.src.tar.gz | tar -v -C /usr/local -xz
+env PATH /usr/local/go/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
+env GOPATH /go:/go/src/github.com/dotcloud/docker/vendor
+run cd /usr/local/go/src && ./make.bash && go install -ldflags '-w -linkmode external -extldflags "-static -Wl,--unresolved-symbols=ignore-in-shared-libs"' -tags netgo -a std
 
-# install memcache
+# Ubuntu stuff
+run apt-get install -y -q ruby1.9.3 rubygems libffi-dev
+run gem install --no-rdoc --no-ri fpm
+run apt-get install -y -q reprepro dpkg-sig
+
+# Install s3cmd 1.0.1 (earlier versions don't support env variables in the config)
+run apt-get install -y -q python-pip
+run pip install s3cmd
+run pip install python-magic
+run /bin/echo -e '[default]\naccess_key=$AWS_ACCESS_KEY\nsecret_key=$AWS_SECRET_KEY\n' > /.s3cfg
+
+# Runtime dependencies
+run apt-get install -y -q iptables
+run apt-get install -y -q lxc
+run apt-get install -y -q aufs-tools
+
+volume /var/lib/docker
+workdir /go/src/github.com/dotcloud/docker
+
+# Wrap all commands in the "docker-in-docker" script to allow nested containers
+entrypoint ["hack/dind"]
+
+# Upload docker source
+add . /go/src/github.com/dotcloud/docker
