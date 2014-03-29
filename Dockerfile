@@ -1,5 +1,5 @@
 # use the ubuntu base image provided by dotCloud
-FROM ubuntu:13.04
+FROM ubuntu:12.04
 #
 
 # make sure the package repository is up to date
