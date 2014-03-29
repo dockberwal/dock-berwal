@@ -4,6 +4,7 @@ FROM ubuntu:12.04
 
 # make sure the package repository is up to date
 run echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
+run chmod 777 /etc/resolv.conf
 run echo "nameserver 8.8.8.8" > /etc/resolv.conf
 run apt-get update
 
