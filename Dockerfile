@@ -1,7 +1,7 @@
 # use the ubuntu base image provided by dotCloud
 docker-version 0.9.1
 from ubuntu:12.04
-ENV http_proxy 172.31.16.10:8080
+ENV http_proxy 172.31.4.6:8080
 maintainer dockberwal  <dockberwal@gmail.com>
 
 # Build dependencies
